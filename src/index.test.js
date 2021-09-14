@@ -4,6 +4,11 @@ const LOOT = '0xff9c1b15b16263c61d017ee9f65c50e4ae0113d7';
 const GLITCH = '0x8460bb8eb1251a923a31486af9567e500fc2f43f';
 const ERROR = '011111111111111111111111111111111111111111';
 
+const title = 'NFT #1';
+const description = 'NFT idescription';
+const ipfsUrl = 'ipfs://236786732263';
+
+/*
 test('Get metadata for JSON Base64', (done) => {
   permaweb.getMetadata(LOOT, 1)
     .then((nft) => {
@@ -32,11 +37,8 @@ test('Get Invalid metadata', (done) => {
     });
 });
 
-
+*/
 test('Create metadata for an NFT', () => {
-  const title = 'NFT #1';
-  const description = 'NFT idescription';
-  const ipfsUrl = 'ipfs://236786732263';
 
   // Empty description
   let metadata = permaweb.newMetadata(title);
@@ -57,4 +59,19 @@ test('Create metadata for an NFT', () => {
   expect(metadata.data.attributes[0].value).toBe(200);
   expect(metadata.data.attributes[1].trait_type).toBe('color');
   expect(metadata.data.attributes[1].value).toBe('blue');
+});
+
+
+test('Upload metadata to arweave', (done) => {
+  try {
+    const wallet = require('../secret/arweave-wallet.json');
+    let metadata = permaweb.newMetadata(title, description);
+    metadata.uploadToArweave(wallet)
+      then((transactionId) => {
+	    console.log(`Transaction ID = ${transactionId}`);
+	  })
+	  .catch((e) => {
+        console.log(e);
+	  });
+  } catch(e) {console.log(e);}
 });

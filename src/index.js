@@ -1,6 +1,7 @@
 require('dotenv').config();
 const ethers = require('ethers');
 const axios = require('axios');
+const Arweave = require('./utils/arweave');
 
 const ERC721_ABI = [
   'function name() view returns (string name)',
@@ -56,6 +57,10 @@ class Metadata {
 
   setMutableUrl(url) {
     this.mutable_data = url;
+  }
+  
+  async uploadToArweave(wallet) {
+    return Arweave.upload(wallet, this.data, 'json');
   }
 }
 /*
