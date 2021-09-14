@@ -4,7 +4,7 @@
   "description": "Set of tools to interact with metadata for NFTs",
   "main": "src/index.js",
   "scripts": {
-    "test": "jest --coverage"
+    "test": "jest --coverage --watch --testTimeout=20000"
   },
   "repository": {
     "type": "git",

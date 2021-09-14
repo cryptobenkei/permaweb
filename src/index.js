@@ -9,22 +9,22 @@ const ERC721_ABI = [
 ];
 
 const formats = [{
-    spec: 'ipfs',
-    pattern: 'ipfs://',
-    get: 'getFromIpfs',
-  },
-  {
-    spec: 'json_base64',
-    pattern: 'data:application/json;base64,',
-    get: 'base64ToJson',
-  }
-];
+  spec: 'ipfs',
+  pattern: 'ipfs://',
+  get: 'getFromIpfs',
+},
+{
+  spec: 'json_base64',
+  pattern: 'data:application/json;base64,',
+  get: 'base64ToJson',
+}];
 
 const JSON_BASE64 = 'data:application/json;base64,';
 
 class DecodeMetadata {
   static base64ToJson(data) {
-    return Buffer.from(data, 'base64').toString('ascii');
+    const metadata = Buffer.from(data, 'base64').toString('ascii');
+    return JSON.parse(metadata);
   }
 
   static async getFromIpfs(uri) {
@@ -33,11 +33,39 @@ class DecodeMetadata {
     return metadata.data;
   }
 }
+class Metadata {
+  constructor(title, description = '') {
+    this.data = {
+      title,
+      description,
+      spec: 'permaweb-1'
+	};
+  }
+  
+  setImage(image) {
+    this.data.image = image;
+  }
 
+  addAttribute(attrId, attrValue) {
+    if (!this.data.attributes) this.data.attributes = [];
+	this.data.attributes.push({
+	  trait_type: attrId,
+	  value: attrValue,
+	});
+  }
+
+  setMutableUrl(url) {
+    this.mutable_data = url;
+  }
+}
 /*
  * Metadata
  */
 class permaweb {
+
+  static newMetadata(title, description) {
+    return new Metadata(title, description);
+  }
 
   /*
    * get Metadata for an NFT.
@@ -62,13 +90,13 @@ class permaweb {
           const nft = {
             name: result[0],
             symbol: result[1],
+            tokenId,
             metadata: await this.fetchMetadata(result[2]),
           }
-
+          nft.metadata.image = await this.fetchMetadata(nft.metadata.image);
           resolve(nft);
         })
         .catch((error) => {
-          console.log(error.message);
           resolve(false);
         })
     })
@@ -81,13 +109,13 @@ class permaweb {
    * @return {promise} JSON file with metadata.
    */
   static fetchMetadata(uri) {
-   console.log(uri);
     for (let i = 0; i < formats.length; i += 1) {
       if (uri.substr(0,formats[i].pattern.length) === formats[i].pattern) {
         const result = DecodeMetadata[formats[i].get](uri.substr(formats[i].pattern.length));
         return result;
       }
     }
+    return uri;
   }
 }
 module.exports = permaweb
