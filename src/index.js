@@ -42,7 +42,7 @@ class Metadata {
       spec: 'permaweb-1'
 	};
   }
-  
+
   setImage(image) {
     this.data.image = image;
   }
@@ -58,9 +58,10 @@ class Metadata {
   setMutableUrl(url) {
     this.mutable_data = url;
   }
-  
+
   async uploadToArweave(wallet) {
-    return Arweave.upload(wallet, this.data, 'json');
+    const ar = new Arweave(wallet, true);
+    return ar.upload(this.data, 'json');
   }
 }
 /*
