@@ -1,4 +1,5 @@
-const permaweb = require('./index');
+const Permaweb = require('./index');
+require('dotenv').config();
 
 const LOOT = '0xff9c1b15b16263c61d017ee9f65c50e4ae0113d7';
 const GLITCH = '0x8460bb8eb1251a923a31486af9567e500fc2f43f';
@@ -8,7 +9,8 @@ const title = 'NFT #1';
 const description = 'NFT idescription';
 const ipfsUrl = 'ipfs://236786732263';
 
-/*
+const permaweb = new Permaweb(process.env.WEB3_ENDPOINT)
+
 test('Get metadata for JSON Base64', (done) => {
   permaweb.getMetadata(LOOT, 1)
     .then((nft) => {
@@ -18,9 +20,9 @@ test('Get metadata for JSON Base64', (done) => {
       done();
     });
 });
-
+/*
 test('Get metadata for Glitch', (done) => {
-  permaweb.getMetadata(GLITCH, 1)
+  Permaweb.getMetadata(GLITCH, 1)
     .then((nft) => {
 	  expect(nft.name).toBe('The Lost Glitches');
 	  expect(nft.symbol).toBe('GLITCH');
@@ -30,24 +32,23 @@ test('Get metadata for Glitch', (done) => {
 });
 
 test('Get Invalid metadata', (done) => {
-  permaweb.getMetadata(ERROR, 1)
+  Permaweb.getMetadata(ERROR, 1)
     .then((nft) => {
 	  expect(nft).toBe(false);
       done();
     });
 });
 
-*/
 test('Create metadata for an NFT', () => {
 
   // Empty description
-  let metadata = permaweb.newMetadata(title);
+  let metadata = Permaweb.newMetadata(title);
   expect(metadata.data.title).toBe(title);
   expect(metadata.data.description).toBe('');
   
   // Full Metadata. 
-  metadata = permaweb.newMetadata(title, description);
-  metadata.setImage(ipfsUrl);
+  metadata = Permaweb.newMetadata(title, description);
+  metadata.addImage(ipfsUrl);
   metadata.setMutableUrl('http://mintknight.com/23');
   metadata.addAttribute('xp', 200);
   metadata.addAttribute('color', 'blue');
@@ -61,17 +62,17 @@ test('Create metadata for an NFT', () => {
   expect(metadata.data.attributes[1].value).toBe('blue');
 });
 
+test('Upload metadata to arweave', async () => {
+  const metadata = Permaweb.newMetadata(title, description);
+  const txId = await metadata.uploadToArweave();
+  expect(await metadata.isConfirmed(txId)).toEqual(1);
+});
+*/
 
-test('Upload metadata to arweave', (done) => {
-  try {
-    const wallet = require('../secret/arweave-wallet.json');
-    let metadata = permaweb.newMetadata(title, description);
-    metadata.uploadToArweave(wallet)
-      then((transactionId) => {
-	    console.log(`Transaction ID = ${transactionId}`);
-	  })
-	  .catch((e) => {
-        console.log(e);
-	  });
-  } catch(e) {console.log(e);}
+
+test('Upload an image to arweave', async () => {
+  const metadata = Permaweb.newMetadata(title, description);
+  metadata.addImage('./assets/test.png');
+  // const txId = await metadata.uploadToArweave();
+  // expect(await metadata.isConfirmed(txId)).toEqual(1);
 });
