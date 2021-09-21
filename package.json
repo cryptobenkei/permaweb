@@ -36,6 +36,8 @@
     "axios": "^0.21.4",
     "dotenv": "^10.0.0",
     "ethers": "^5.4.6",
+    "filereader": "^0.10.3",
+    "image-to-base64": "^2.2.0",
     "testweave-sdk": "^0.2.2"
   }
 }

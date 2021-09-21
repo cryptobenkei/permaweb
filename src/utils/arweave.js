@@ -1,6 +1,6 @@
 const Arweave = require('arweave');
 const TestWeave = require('testweave-sdk').default;
-const fs = require('fs/promises');
+const fs = require('fs');
 const path = require('path');
 
 module.exports = class ArweaveConnect
@@ -40,16 +40,23 @@ module.exports = class ArweaveConnect
       let ar = this.arweave.ar.winstonToAr(balance);
 
 	  try {
+
+		// If IsJSON
+		// contenType = 
+
+		// If is a File
+		// path.extname(data);
+
         let transaction;
         switch(dataType) {
           case 'png':
-            console.log('here:', data)
             try {
-            const png = await fs.readFile(data);
-            transaction = await this.arweave.createTransaction({ data: png }, this.wallet);
+            let bitmap = fs.readFileSync(data);
+			const png = new Buffer(bitmap, 'base64');
+            transaction = await this.arweave.createTransaction({ data: png}, this.wallet);
             transaction.addTag('Content-Type', 'image/png');
             } catch (e) {console.log(e);}
-            console.log(transaction);
+            console.log(transaction.id);
           break;
           case 'jpg':
           case 'jpeg':

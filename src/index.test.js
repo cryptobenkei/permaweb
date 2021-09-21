@@ -11,7 +11,6 @@ const ipfsUrl = 'ipfs://236786732263';
 const testApi = 'https://testmutap.com/1111';
 
 const permaweb = new Permaweb(process.env.WEB3_ENDPOINT)
-/*
 test('Get metadata for JSON Base64', async () => {
   const nft = await permaweb.getMetadata(LOOT, 1)
   expect(nft.title).toBe('Loot');
@@ -64,7 +63,6 @@ test('Upload metadata to arweave', async () => {
   console.log(txId);
   expect(await nft.isConfirmed(txId)).toEqual(1);
 });
-*/
 
 test('Upload an image to arweave', async () => {
   let nft = permaweb.newNFT(name, description);
@@ -74,8 +72,6 @@ test('Upload an image to arweave', async () => {
   nft = permaweb.newNFT(name, description);
   ret = nft.uploadImage('../assets/image.png');
   expect(ret).toBe(true);
-  console.log(nft.data);
   const txId = await nft.uploadToArweave();
-  console.log(txId);
-  // expect(await metadata.isConfirmed(txId)).toEqual(1);
+  expect(await nft.isConfirmed(txId)).toEqual(1);
 });

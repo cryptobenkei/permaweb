@@ -123,25 +123,24 @@ class Metadata {
       this.arweave.gateway = new ArweaveConnect(this.arweave.wallet);
       await this.arweave.gateway.init();
 	}
-    console.log(this.data);
     if (this.data.image) {
-      console.log('upload img', this.data.image )
       const imageTxId = await this.arweave.gateway.upload(this.data.image, 'png');
       this.data.metadata.image =`ar://${imageTxId}`;
     }
 
     const txId = await this.arweave.gateway.upload(this.data.metadata, 'json');
-    return txId;
+    return `ar://${txId}`;
   }
 
   /**
    * Get confirmations for a transaction
    */
-  async isConfirmed(txId) {
+  async isConfirmed(uri) {
     if (!this.arweave.gateway) {
       this.arweave.gateway = new ArweaveConnect(this.arweave.wallet);
       await this.arweave.gateway.init();
 	}
+	const txId = uri.substr(5);
 	return (await this.arweave.gateway.confirmations(txId));
   }
 
