@@ -1,5 +1,7 @@
 const ethers = require('ethers');
 const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
 const ArweaveConnect = require('./utils/arweave');
 
 const ERC721_ABI = [
@@ -43,44 +45,60 @@ class Metadata {
    *
    */
   constructor(data, wallet = false) {
-	this.info = {
-	  address: false,
-	  tokenId: false,
-      title: false,
-      description: false,
-      spec: 'permaweb-1',
+    // Basic struct.
+	this.data = {
+	  address: data.address || false,
+	  tokenId: data.tokenId || false,
+      metadata: {
+        name: (data.name) || false,
+        version: 'permaweb-1',
+      },
+      images: []
 	};
-    if (data.title) {
-      this.info.title = data.title;
-      this.info.description = data.description;
-	} else if (data.address) {
-      this.info.address = data.address;
-      this.info.tokenId = data.tokenId;
-	}
-	this.wallet = wallet;
-    this.ar = false;
+
+    // Initial values if any.
+    (data.description) && (this.data.metadata.description = data.description);
+
+    // Arweave.
+    this.arweave = {
+	  wallet,
+      gateway: false
+    }
   }
 
   /**
-   * Adds an image from a file.
+   * Set Fees
    */
-  addImage(image) {
-    this.data.image = image;
+  setFees(fees) {
+    // TODO: Check valid values.
+    this.data.metadata.seller_fee_basis_points = fees;
   }
 
   /**
-   * Sets the image (from IPFS).
+   * Adds an image from a file to be uploaded.
+   */
+  uploadImage(imagePath) {
+    const img = path.join(__dirname, imagePath);
+    if (fs.existsSync(img)) {
+      this.data.image = img;
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Sets the image (URL).
    */
   setImage(image) {
-    this.data.image = image;
+    this.data.metadata.image = image;
   }
 
   /**
    * adds an Attribute
    */
   addAttribute(attrId, attrValue) {
-    if (!this.data.attributes) this.data.attributes = [];
-	this.data.attributes.push({
+    if (!this.data.metadata.attributes) this.data.metadata.attributes = [];
+	this.data.metadata.attributes.push({
 	  trait_type: attrId,
 	  value: attrValue,
 	});
@@ -89,19 +107,30 @@ class Metadata {
   /**
    * Sets the Mutable URL
    */
-  setMutableUrl(url) {
-    this.mutable_data = url;
+  setMutableUrl(uri) {
+    if (!this.data.metadata.properties) this.data.metadata.properties= [];
+	this.data.metadata.properties['mutable_url'] = {
+	  uri,
+	  type: 'application/json',
+    }
   }
 
   /**
    * Upload Metadata to Arweave.
    */
   async uploadToArweave() {
-    if (!this.ar) {
-      this.ar = new ArweaveConnect(wallet, true);
-      await this.ar.init();
+    if (!this.arweave.gateway) {
+      this.arweave.gateway = new ArweaveConnect(this.arweave.wallet);
+      await this.arweave.gateway.init();
 	}
-    const txId = await this.ar.upload(this.data, 'json')
+    console.log(this.data);
+    if (this.data.image) {
+      console.log('upload img', this.data.image )
+      const imageTxId = await this.arweave.gateway.upload(this.data.image, 'png');
+      this.data.metadata.image =`ar://${imageTxId}`;
+    }
+
+    const txId = await this.arweave.gateway.upload(this.data.metadata, 'json');
     return txId;
   }
 
@@ -109,39 +138,46 @@ class Metadata {
    * Get confirmations for a transaction
    */
   async isConfirmed(txId) {
-    if (!this.ar) {
-      this.ar = new ArweaveConnect(wallet, true);
-      await this.ar.init();
+    if (!this.arweave.gateway) {
+      this.arweave.gateway = new ArweaveConnect(this.arweave.wallet);
+      await this.arweave.gateway.init();
 	}
-	return (await this.ar.confirmations(txId));
+	return (await this.arweave.gateway.confirmations(txId));
   }
 
   /**
    * Fetch the Metadata
    */
   async getMetadata(web3Provider) {
-    return new Promise((resolve) => {
-      const { JsonRpcProvider } = ethers.providers; 
-      const provider = new JsonRpcProvider(web3Provider);
-      const contract = new ethers.Contract(address, ERC721_ABI, provider);
-      const promises = [
-        contract.name(),
-        contract.symbol(),
-        contract.tokenURI(tokenId),
-      ];
-      Promise.all(promises)
-        .then(async (result) => {
-          const nft = {
-            name: result[0],
-            symbol: result[1],
-            tokenId,
-            metadata: await this.fetchMetadata(result[2]),
-          }
-          nft.metadata.image = await this.fetchMetadata(nft.metadata.image);
-          resolve(nft);
-        })
+    return new Promise(async (resolve, reject) => {
+      try {
+        const { JsonRpcProvider } = ethers.providers;
+        const provider = new JsonRpcProvider(web3Provider);
+        const contract = new ethers.Contract(this.data.address, ERC721_ABI, provider);
+        const promises = [
+          contract.name(),
+          contract.symbol(),
+          contract.tokenURI(this.data.tokenId),
+        ];
+        Promise.all(promises)
+          .then(async (result) => {
+            this.data.title = result[0];
+            this.data.symbol = result[1];
+            this.data.metadata = await this.fetchMetadata(result[2]);
+            if (this.data.metadata.image) {
+              this.data.metadata.image = await this.fetchMetadata(this.data.metadata.image);
+            }
+            resolve(true);
+          })
+          .catch(() => {
+            reject();
+          });
+      } catch (e) {
+        console.log(e);
+        reject();
+      }
     });
-  } 
+  }
 
   /**
    * Fetch Metadata

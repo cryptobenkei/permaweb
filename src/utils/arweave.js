@@ -6,9 +6,9 @@ const path = require('path');
 module.exports = class ArweaveConnect
 {
 
-  constructor (wallet, testnet = false) {
+  constructor (wallet) {
     this.wallet = wallet;
-    this.testnet = testnet;
+    this.testnet = (wallet === false);
     this.testWeave = false;
   }
 
@@ -39,20 +39,23 @@ module.exports = class ArweaveConnect
       const balance = await this.arweave.wallets.getBalance(address);
       let ar = this.arweave.ar.winstonToAr(balance);
 
-      // let data = await fs.readFile(path.join(__dirname,'image.jpeg'));
 	  try {
         let transaction;
-		  console.log(dataType);
         switch(dataType) {
           case 'png':
+            console.log('here:', data)
+            try {
+            const png = await fs.readFile(data);
+            transaction = await this.arweave.createTransaction({ data: png }, this.wallet);
             transaction.addTag('Content-Type', 'image/png');
+            } catch (e) {console.log(e);}
+            console.log(transaction);
           break;
           case 'jpg':
           case 'jpeg':
             transaction.addTag('Content-Type', 'image/jpeg');
           break;
           case 'json':
-				console.log(data);
             transaction = await this.arweave.createTransaction({ data: JSON.stringify(data) }, this.wallet);
             transaction.addTag('Content-Type', 'application/json');
 	      break;
@@ -63,7 +66,6 @@ module.exports = class ArweaveConnect
           await uploader.uploadChunk();
           // console.log(`${uploader.pctComplete}% complete, ${uploader.uploadedChunks}/${uploader.totalChunks}`);
         }
-		  console.log(transaction);
 		this.testWeave & await this.testWeave.mine();
 
         resolve(transaction.id);

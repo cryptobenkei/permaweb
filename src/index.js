@@ -16,11 +16,11 @@ class Permaweb {
   /**
    * new Metadata.
    *
-   * @param {string} title Title of the NFT.
+   * @param {string} name Name of the NFT.
    * @param {string} description Description of the NFT.
    */
-  newMetadata(title, description) {
-    return new Metadata({title, description}, this.arweaveWallet);
+  newNFT(name, description = false) {
+    return new Metadata({name, description}, this.arweaveWallet);
   }
 
   /*
@@ -31,11 +31,16 @@ class Permaweb {
    * @return {promise} Full metadata for that NFT.
    */
   async getMetadata(address, tokenId) {
-	const metadata = new Metadata({address, tokenId}, this.arweaveWallet);
-	  console.log('GET 1');
-	await metadata.getMetadata(this.web3Endpoint);
-	console.log('GET 2');
-    return metadata;
+    return new Promise((resolve) => {
+	  const metadata = new Metadata({address, tokenId}, this.arweaveWallet);
+	  metadata.getMetadata(this.web3Endpoint)
+        .then(() => {
+          resolve(metadata.data);
+        })
+        .catch(() => {
+          resolve(false);
+        })
+    })
   }
 }
 
