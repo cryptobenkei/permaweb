@@ -159,8 +159,6 @@ class Metadata {
             } catch (_error) {
               this.data.uri = await contract.uri(this.data.tokenId);
             }
-			  console.log(this.data.uri);
-
             this.data.metadata = await Metadata.fetchMetadata(this.data.uri);
             if (this.data.metadata.image) {
               this.data.metadata.image = await Metadata.fetchMetadata(this.data.metadata.image);

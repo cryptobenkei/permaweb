@@ -1,14 +1,22 @@
-// const chalk = require('chalk');
-const permaweb = require('../src/index');
+require('dotenv').config();
+const chalk = require('chalk');
+const figlet = require('figlet');
+const Permaweb = require('../src/index');
 
+const permaweb = new Permaweb(process.env.WEB3_ENDPOINT);
 const { log } = console;
 
-const main = (address, tokenId = 1) => {
+const main = async (address, tokenId = 1) => {
   if (!address) log('Invalid address');
-  console.log(address, tokenId);
-  const metadata = permaweb.getMetadata(address, tokenId);
-  console.log(metadata);
+  const nft = await permaweb.getMetadata(address, tokenId);
+  figlet('Permaweb', (err, data) => {
+    log('\n');
+    log(data);
+    log(chalk.green.bold(nft.title), nft.symbol);
+    log('\n');
+    log(chalk.blue.bold('Name'), nft.metadata.name);
+    log(chalk.blue.bold('Description'), nft.metadata.description);
+  });
 };
 
-console.log(process.argv);
 main(process.argv[2], process.argv[3]);
