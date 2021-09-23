@@ -4,7 +4,6 @@ const Metadata = require('./metadata');
  * Permaweb
  */
 class Permaweb {
-
   /**
    * Constructor.
    */
@@ -20,7 +19,7 @@ class Permaweb {
    * @param {string} description Description of the NFT.
    */
   newNFT(name, description = false) {
-    return new Metadata({name, description}, this.arweaveWallet);
+    return new Metadata({ name, description }, this.arweaveWallet);
   }
 
   /*
@@ -32,15 +31,15 @@ class Permaweb {
    */
   async getMetadata(address, tokenId) {
     return new Promise((resolve) => {
-	  const metadata = new Metadata({address, tokenId}, this.arweaveWallet);
-	  metadata.getMetadata(this.web3Endpoint)
+      const metadata = new Metadata({ address, tokenId }, this.arweaveWallet);
+      metadata.getMetadata(this.web3Endpoint)
         .then(() => {
           resolve(metadata.data);
         })
         .catch(() => {
           resolve(false);
-        })
-    })
+        });
+    });
   }
 }
 

@@ -1,13 +1,14 @@
 const ethers = require('ethers');
-const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 const ArweaveConnect = require('./utils/arweave');
+const DecodeMetadata = require('./decode');
 
 const ERC721_ABI = [
   'function name() view returns (string name)',
   'function symbol() view returns (string symbol)',
   'function tokenURI(uint256 tokenId) view returns (string memory)',
+  'function uri(uint256 tokenId) view returns (string memory)',
 ];
 
 const formats = [{
@@ -19,25 +20,15 @@ const formats = [{
   spec: 'json_base64',
   pattern: 'data:application/json;base64,',
   get: 'base64ToJson',
+},
+{
+  spec: 'https',
+  pattern: 'https://',
+  get: 'apiCall',
+
 }];
 
-const JSON_BASE64 = 'data:application/json;base64,';
-
-class DecodeMetadata {
-  static base64ToJson(data) {
-    const metadata = Buffer.from(data, 'base64').toString('ascii');
-    return JSON.parse(metadata);
-  }
-
-  static async getFromIpfs(uri) {
-    const urlPost = `https://ipfs.io/ipfs/${uri}`;
-    const metadata = await axios.get(urlPost);
-    return metadata.data;
-  }
-}
-
 class Metadata {
-
   /**
    * Constructor.
    *
@@ -46,24 +37,26 @@ class Metadata {
    */
   constructor(data, wallet = false) {
     // Basic struct.
-	this.data = {
-	  address: data.address || false,
-	  tokenId: data.tokenId || false,
+    this.data = {
+      address: data.address || false,
+      tokenId: data.tokenId || false,
       metadata: {
         name: (data.name) || false,
         version: 'permaweb-1',
       },
-      images: []
-	};
+      images: [],
+    };
 
     // Initial values if any.
-    (data.description) && (this.data.metadata.description = data.description);
+    if (data.description) {
+      this.data.metadata.description = data.description;
+    }
 
     // Arweave.
     this.arweave = {
-	  wallet,
-      gateway: false
-    }
+      wallet,
+      gateway: false,
+    };
   }
 
   /**
@@ -98,21 +91,21 @@ class Metadata {
    */
   addAttribute(attrId, attrValue) {
     if (!this.data.metadata.attributes) this.data.metadata.attributes = [];
-	this.data.metadata.attributes.push({
-	  trait_type: attrId,
-	  value: attrValue,
-	});
+    this.data.metadata.attributes.push({
+      trait_type: attrId,
+      value: attrValue,
+    });
   }
 
   /**
    * Sets the Mutable URL
    */
   setMutableUrl(uri) {
-    if (!this.data.metadata.properties) this.data.metadata.properties= [];
-	this.data.metadata.properties['mutable_url'] = {
-	  uri,
-	  type: 'application/json',
-    }
+    if (!this.data.metadata.properties) this.data.metadata.properties = [];
+    this.data.metadata.properties.mutable_url = {
+      uri,
+      type: 'application/json',
+    };
   }
 
   /**
@@ -122,10 +115,10 @@ class Metadata {
     if (!this.arweave.gateway) {
       this.arweave.gateway = new ArweaveConnect(this.arweave.wallet);
       await this.arweave.gateway.init();
-	}
+    }
     if (this.data.image) {
       const imageTxId = await this.arweave.gateway.upload(this.data.image, 'png');
-      this.data.metadata.image =`ar://${imageTxId}`;
+      this.data.metadata.image = `ar://${imageTxId}`;
     }
 
     const txId = await this.arweave.gateway.upload(this.data.metadata, 'json');
@@ -139,16 +132,17 @@ class Metadata {
     if (!this.arweave.gateway) {
       this.arweave.gateway = new ArweaveConnect(this.arweave.wallet);
       await this.arweave.gateway.init();
-	}
-	const txId = uri.substr(5);
-	return (await this.arweave.gateway.confirmations(txId));
+    }
+    const txId = uri.substr(5);
+    const confirmations = await this.arweave.gateway.confirmations(txId);
+    return confirmations;
   }
 
   /**
    * Fetch the Metadata
    */
   async getMetadata(web3Provider) {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       try {
         const { JsonRpcProvider } = ethers.providers;
         const provider = new JsonRpcProvider(web3Provider);
@@ -156,24 +150,27 @@ class Metadata {
         const promises = [
           contract.name(),
           contract.symbol(),
-          contract.tokenURI(this.data.tokenId),
         ];
         Promise.all(promises)
           .then(async (result) => {
-            this.data.title = result[0];
-            this.data.symbol = result[1];
-            this.data.metadata = await this.fetchMetadata(result[2]);
+            [this.data.title, this.data.symbol] = result;
+            try {
+              this.data.uri = await contract.tokenURI(this.data.tokenId);
+            } catch (_error) {
+              this.data.uri = await contract.uri(this.data.tokenId);
+            }
+
+            this.data.metadata = await Metadata.fetchMetadata(this.data.uri);
             if (this.data.metadata.image) {
-              this.data.metadata.image = await this.fetchMetadata(this.data.metadata.image);
+              this.data.metadata.image = await Metadata.fetchMetadata(this.data.metadata.image);
             }
             resolve(true);
           })
-          .catch(() => {
-            reject();
+          .catch((e) => {
+            reject(e);
           });
       } catch (e) {
-        console.log(e);
-        reject();
+        reject(e);
       }
     });
   }
@@ -184,10 +181,10 @@ class Metadata {
    * @param {string} uri URY in the contract
    * @return {promise} JSON file with metadata.
    */
-  async fetchMetadata(uri) {
+  static async fetchMetadata(uri) {
     for (let i = 0; i < formats.length; i += 1) {
-      if (uri.substr(0,formats[i].pattern.length) === formats[i].pattern) {
-        const result = DecodeMetadata[formats[i].get](uri.substr(formats[i].pattern.length));
+      if (uri.substr(0, formats[i].pattern.length) === formats[i].pattern) {
+        const result = DecodeMetadata[formats[i].get](uri.substr(formats[i].pattern.length), uri);
         return result;
       }
     }
