@@ -24,7 +24,7 @@ const formats = [{
 {
   spec: 'https',
   pattern: 'https://',
-  get: 'apiCall',
+  get: 'getFromApi',
 
 }];
 
@@ -159,6 +159,7 @@ class Metadata {
             } catch (_error) {
               this.data.uri = await contract.uri(this.data.tokenId);
             }
+			  console.log(this.data.uri);
 
             this.data.metadata = await Metadata.fetchMetadata(this.data.uri);
             if (this.data.metadata.image) {

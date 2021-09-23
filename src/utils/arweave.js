@@ -1,8 +1,8 @@
 const Arweave = require('arweave');
-const TestWeave = require('testweave-sdk').default;
+const TestWeave = require('testweave-sdk');
 const fs = require('fs');
 
-module.exports = class ArweaveConnect {
+class ArweaveConnect {
   constructor(wallet) {
     this.wallet = wallet;
     this.testnet = (wallet === false);
@@ -100,3 +100,5 @@ module.exports = class ArweaveConnect {
     return (result.status === 200 ? result.confirmed.number_of_confirmations : 0);
   }
 };
+
+module.exports = ArweaveConnect;
