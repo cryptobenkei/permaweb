@@ -14,7 +14,6 @@ const ipfsUrl = 'ipfs://236786732263';
 const testApi = 'https://testmutap.com/1111';
 
 const permaweb = new Permaweb(process.env.WEB3_ENDPOINT);
-/*
 // Metadata is hardcoded as a Base64Json inside the contract.
 test('Get metadata for JSON Base64', async () => {
   const nft = await permaweb.getMetadata(LOOT, 1);
@@ -22,7 +21,7 @@ test('Get metadata for JSON Base64', async () => {
   expect(nft.symbol).toBe('LOOT');
   expect(nft.metadata.name).toBe('Bag #1');
 });
-//
+
 // Metadata is one IPFS link : ipfs://QA...
 test('Get metadata for Glitch - IPFS', async () => {
   const nft = await permaweb.getMetadata(GLITCH, 1);
@@ -30,6 +29,7 @@ test('Get metadata for Glitch - IPFS', async () => {
   expect(nft.symbol).toBe('GLITCH');
   expect(nft.metadata.name).toBe('Lost Glitch #1');
 });
+/*
 // Metadata is one IPFS link : ipfs://ipfs/QA...
 test('Get metadata for EthPunk - Api Call', async () => {
   const nft = await permaweb.getMetadata(DIDIERA, 1);
@@ -37,7 +37,6 @@ test('Get metadata for EthPunk - Api Call', async () => {
   expect(nft.symbol).toBe('DDR');
   expect(nft.metadata.name).toBe('Skull Helmet 01');
 });
-*/
 
 // Instead of tokenURI it uses uri.
 test('Get metadata for Thug 1 - arweave', async () => {
@@ -52,7 +51,7 @@ test('Get Invalid metadata', async () => {
   const nft = await permaweb.getMetadata(ERROR, 1);
   expect(nft).toBe(false);
 });
-/*
+
 test('Create metadata for an NFT', () => {
   // Empty description
   let nft = permaweb.newNFT(name);

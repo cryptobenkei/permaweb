@@ -1,4 +1,5 @@
 const Arweave = require('arweave');
+const Smartweave = require('smartweave');
 const TestWeave = require('testweave-sdk');
 const fs = require('fs');
 
@@ -49,7 +50,6 @@ class ArweaveConnect {
               transaction = await this.arweave.createTransaction({ data: png }, this.wallet);
               transaction.addTag('Content-Type', 'image/png');
             } catch (e) { console.log(e); }
-            console.log(transaction.id);
             break;
           case 'jpg':
           case 'jpeg':
@@ -98,6 +98,17 @@ class ArweaveConnect {
       await this.testWeave.mine();
     }
     return (result.status === 200 ? result.confirmed.number_of_confirmations : 0);
+  }
+
+  async deploy(contractSrc, initState) {
+    const tx = await Smartweave.createContract(
+      this.arweave,
+      this.wallet,
+      contractSrc,
+      initState
+    );
+    // console.log(tx);
+    return tx;
   }
 };
 
