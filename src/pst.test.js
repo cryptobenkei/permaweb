@@ -7,6 +7,7 @@ const pst = new PST(wallet);
 
 test('Deploy Base Token for the PST', async () => {
   await pst.deployToken();
+
   expect(1).toBe(1);
 });
 
