@@ -1,5 +1,5 @@
 // import Permaweb from './index';
-const Permaweb = require('./index');
+const Permaweb = require('../src/index');
 require('dotenv').config();
 
 const LOOT = '0xff9c1b15b16263c61d017ee9f65c50e4ae0113d7';

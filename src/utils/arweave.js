@@ -1,6 +1,6 @@
 const Arweave = require('arweave');
 const Smartweave = require('smartweave');
-const TestWeave = require('testweave-sdk');
+const TestWeave = require('testweave-sdk').default;
 const fs = require('fs');
 
 class ArweaveConnect {
@@ -45,9 +45,8 @@ class ArweaveConnect {
           case 'png':
             try {
               const bitmap = fs.readFileSync(data);
-              /* eslint-disable no-eval */
-              const png = new Buffer(bitmap, 'base64'); // eslint-disable-line no-eval
-              transaction = await this.arweave.createTransaction({ data: png }, this.wallet);
+              const dataPng = Buffer.from(bitmap, 'base64');
+              transaction = await this.arweave.createTransaction({ data: dataPng }, this.wallet);
               transaction.addTag('Content-Type', 'image/png');
             } catch (e) { console.log(e); }
             break;
@@ -57,6 +56,7 @@ class ArweaveConnect {
             transaction.addTag('Content-Type', 'image/jpeg');
             break;
           case 'json':
+            console.log({ data: JSON.stringify(data) });
             transaction = await this.arweave.createTransaction(
               { data: JSON.stringify(data) }, this.wallet,
             );
@@ -81,9 +81,10 @@ class ArweaveConnect {
         if (this.testWeave) {
           await this.testWeave.mine();
         }
-
+console.log(transaction);
         resolve(transaction.id);
       } catch (e) {
+console.log(e);
         resolve(false);
       }
     });
@@ -105,10 +106,18 @@ class ArweaveConnect {
       this.arweave,
       this.wallet,
       contractSrc,
-      initState
+      initState,
     );
-    // console.log(tx);
+    console.log('end',tx);
     return tx;
+  }
+
+  async getOwner(contract) {
+    const state = Smartweave.interactRead(
+      this.arweave,
+      this.wallet,
+      contract);
+    return state;
   }
 };
 

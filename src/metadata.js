@@ -117,11 +117,14 @@ class Metadata {
       await this.arweave.gateway.init();
     }
     if (this.data.image) {
+      console.log('UPLOAD IMG');
       const imageTxId = await this.arweave.gateway.upload(this.data.image, 'png');
       this.data.metadata.image = `ar://${imageTxId}`;
     }
 
+    console.log('UPLOAD JSON', this.data.metadata);
     const txId = await this.arweave.gateway.upload(this.data.metadata, 'json');
+    console.log(txId);
     return `ar://${txId}`;
   }
 
