@@ -1,6 +1,6 @@
 const Arweave = require('arweave');
 const Smartweave = require('smartweave');
-const TestWeave = require('testweave-sdk');
+const TestWeave = require('testweave-sdk').default;
 const fs = require('fs');
 
 class ArweaveConnect {
@@ -45,9 +45,8 @@ class ArweaveConnect {
           case 'png':
             try {
               const bitmap = fs.readFileSync(data);
-              /* eslint-disable no-eval */
-              const png = new Buffer(bitmap, 'base64'); // eslint-disable-line no-eval
-              transaction = await this.arweave.createTransaction({ data: png }, this.wallet);
+              const dataPng = Buffer.from(bitmap, 'base64');
+              transaction = await this.arweave.createTransaction({ data: dataPng }, this.wallet);
               transaction.addTag('Content-Type', 'image/png');
             } catch (e) { console.log(e); }
             break;
@@ -81,7 +80,6 @@ class ArweaveConnect {
         if (this.testWeave) {
           await this.testWeave.mine();
         }
-
         resolve(transaction.id);
       } catch (e) {
         resolve(false);
@@ -105,11 +103,63 @@ class ArweaveConnect {
       this.arweave,
       this.wallet,
       contractSrc,
-      initState
+      initState,
     );
-    // console.log(tx);
+
+    // If in testing mode force arweave mine.
+    if (this.testWeave) {
+      await this.testWeave.mine();
+    }
+
     return tx;
   }
-};
+
+  async readState(contract, input) {
+    const state = await Smartweave.interactRead(
+      this.arweave,
+      this.wallet,
+      contract,
+      input,
+    );
+    return state;
+  }
+
+  async writeState(contract, input) {
+    return new Promise((resolve) => {
+      Smartweave.interactWrite(
+        this.arweave,
+        this.wallet,
+        contract,
+        input,
+      )
+        .then(async (state) => {
+          if (this.testWeave) {
+            await this.testWeave.mine();
+          }
+          resolve(state);
+        })
+        .catch((e) => {
+          console.log('Error', e);
+          resolve(false);
+        });
+    });
+  }
+
+  async readContractState(contract) {
+    return new Promise((resolve) => {
+      Smartweave.readContract(
+        this.arweave,
+        contract,
+      )
+        .then(async (state) => {
+          resolve(state);
+        })
+        .catch((e) => {
+          console.log('Error', e);
+          resolve(false);
+        });
+    });
+  }
+}
 
 module.exports = ArweaveConnect;
