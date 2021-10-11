@@ -12,7 +12,6 @@ test('Create metadata for an NFT', () => {
   // Empty description
   let nft = permaweb.newNFT(name);
   expect(nft.data.metadata.name).toBe(name);
-  expect(nft.data.metadata.description).toBeDefined();
 
   // Full Metadata.
   nft = permaweb.newNFT(name, description);

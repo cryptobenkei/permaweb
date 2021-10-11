@@ -8,7 +8,7 @@ export function handle (state, action) {
   const owner = state.owner
 
   if (input.function === 'getOwner') {
-    return { result: { owner: state.owner  } }
+    return { result: { owner: state.owner, test: true  } }
   }
 
   if (input.function === 'addAuthor') {

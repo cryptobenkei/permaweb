@@ -30,6 +30,16 @@ class ArweaveConnect {
     }
   }
 
+  async mine() {
+   if (this.testWeave) {
+      console.log('mine 1');
+      await this.testWeave.mine();
+      console.log('mine 2');
+      await this.testWeave.mine();
+      console.log('mine 3');
+      await this.testWeave.mine();
+    }
+  }
   /* eslint-disable */
   //TODO: FIX Linter problems
   async upload(data, dataType) {
@@ -91,10 +101,7 @@ class ArweaveConnect {
   async confirmations(transactionId) {
     // Connect Wallet and verify balance.
     const result = await this.arweave.transactions.getStatus(transactionId);
-    // If in testing mode force arweave mine.
-    if (this.testWeave) {
-      await this.testWeave.mine();
-    }
+    await this.mine();
     return (result.status === 200 ? result.confirmed.number_of_confirmations : 0);
   }
 
@@ -106,11 +113,7 @@ class ArweaveConnect {
       initState,
     );
 
-    // If in testing mode force arweave mine.
-    if (this.testWeave) {
-      await this.testWeave.mine();
-    }
-
+    await this.mine();
     return tx;
   }
 
@@ -133,9 +136,8 @@ class ArweaveConnect {
         input,
       )
         .then(async (state) => {
-          if (this.testWeave) {
-            await this.testWeave.mine();
-          }
+          await this.mine();
+          console.log(state);
           resolve(state);
         })
         .catch((e) => {
