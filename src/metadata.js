@@ -68,6 +68,21 @@ class Metadata {
   }
 
   /**
+   * Encodes and SVG
+   */
+  encodeSVG(svg) {
+    let buff = new Buffer(svg);
+    this.data.image = 'data:image/svg+xml;base64,' + buff.toString('base64');
+  }
+
+  encodeMetadata() {
+    const metadata = this.data.metadata;
+    metadata.image = this.data.image;
+    let buff = new Buffer(JSON.stringify(metadata));
+    return 'data:application/json;base64,' + buff.toString('base64');
+  }
+
+  /**
    * Adds an image from a file to be uploaded.
    */
   uploadImage(imagePath) {
@@ -159,6 +174,7 @@ class Metadata {
             } catch (_error) {
               this.data.uri = await contract.uri(this.data.tokenId);
             }
+            console.log(this.data);
             this.data.metadata = await Metadata.fetchMetadata(this.data.uri);
             if (this.data.metadata.image) {
               this.data.metadata.image = await Metadata.fetchMetadata(this.data.metadata.image);
@@ -183,6 +199,7 @@ class Metadata {
   static async fetchMetadata(uri) {
     for (let i = 0; i < formats.length; i += 1) {
       if (uri.substr(0, formats[i].pattern.length) === formats[i].pattern) {
+        console.log('pattern found');
         const result = DecodeMetadata[formats[i].get](uri.substr(formats[i].pattern.length), uri);
         return result;
       }

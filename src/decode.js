@@ -3,6 +3,14 @@ const axios = require('axios');
 class DecodeMetadata {
   static base64ToJson(data) {
     const metadata = Buffer.from(data, 'base64').toString('ascii');
+    try {
+    console.log(data, metadata) ;
+    console.log(JSON.parse(metadata));
+
+    } catch (e) {
+      console.log("Invalid JSON Format");
+      process.exit(1);
+    }
     return JSON.parse(metadata);
   }
 
