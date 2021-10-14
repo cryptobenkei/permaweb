@@ -1,9 +1,10 @@
-const ArweaveConnect = require('./utils/arweave');
 const fs = require('fs');
 const path = require('path');
+const ArweaveConnect = require('./utils/arweave');
 
 class PST {
-  constructor(wallet) {
+  constructor(contract = false, wallet = false) {
+    this.contract = contract;
     this.arweave = {
       wallet,
       gateway: false,
@@ -17,34 +18,62 @@ class PST {
     }
   }
 
+  async createWallet() {
+    await this.init();
+    const addr = await this.arweave.gateway.createWallet();
+    return addr;
+  }
+
   async deployResolver(author, address) {
     await this.init();
     const contractSrc = fs.readFileSync(path.join(__dirname, './contracts/resolver.js'));
-    const initState = { owner: address, canEvolve: true, authors: {}, nfts: {} };
+    const initState = {
+      owner: address,
+      counter: 0,
+      canEvolve: true,
+      authors: {},
+      nfts: {},
+    };
     initState.authors[author] = address;
     const addr = await this.arweave.gateway.deploy(
       contractSrc.toString(),
       JSON.stringify(initState),
     );
+    this.contract = addr;
     return addr;
   }
 
-  async readState(contract, callFunction, state = {}) {
+  async readState(callFunction, state = {}) {
     await this.init();
     const input = { ...state, function: callFunction };
-    return this.arweave.gateway.readState(contract, input);
+    try {
+      const read = await this.arweave.gateway.readState(this.contract, input);
+      return read;
+    } catch (e) {
+      return 'TX Pending';
+    }
   }
 
-  async writeState(contract, callFunction, state = {}) {
+  async writeState(callFunction, state = {}) {
     await this.init();
     const input = { ...state, function: callFunction };
-    return this.arweave.gateway.writeState(contract, input);
+    try {
+      const write = this.arweave.gateway.writeState(this.contract, input);
+      return write;
+    } catch (e) {
+      console.log(e);
+      return 'TX Pending';
+    }
   }
 
-  async contractState(contract) {
+  async contractState() {
     await this.init();
-	  console.log(contract);
-    return this.arweave.gateway.readContractState(contract);
+    try {
+      const read = this.arweave.gateway.readContractState(this.contract);
+      return read;
+    } catch (e) {
+      return 'TX pending';
+    }
   }
 }
 

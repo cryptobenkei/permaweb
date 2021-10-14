@@ -7,9 +7,12 @@ class Permaweb {
   /**
    * Constructor.
    */
-  constructor(web3Endpoint, arweaveWallet = false) {
-    this.web3Endpoint = web3Endpoint;
+  constructor(arweaveWallet = false) {
     this.arweaveWallet = arweaveWallet;
+  }
+
+  setProvider(provider) {
+    this.web3Endpoint = provider;
   }
 
   /**
@@ -40,6 +43,13 @@ class Permaweb {
           resolve(false);
         });
     });
+  }
+
+  async getTransaction(txId) {
+    const metadata = new Metadata({}, this.arweaveWallet);
+    const transaction = await metadata.getTransaction(txId);
+    console.log(transaction);
+    return txId;
   }
 }
 

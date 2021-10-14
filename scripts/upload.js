@@ -3,14 +3,16 @@ const chalk = require('chalk');
 const figlet = require('figlet');
 const Permaweb = require('../src/index');
 
-const permaweb = new Permaweb(process.env.WEB3_ENDPOINT);
+const wallet = require('../secret/arweave-wallet.json');
+// const wallet = false;
+const permaweb = new Permaweb(wallet);
 const { log } = console;
 
-const main = async (name, description) => {
+const upload = async (name, description) => {
   const nft = permaweb.newNFT(name, description);
   nft.uploadImage('../assets/image.png');
   const txId = await nft.uploadToArweave();
-  await nft.isConfirmed(txId)
+  await nft.isConfirmed(txId);
   log('\n');
   log(chalk.green.bold('txId'), txId);
   console.log(nft.data.metadata);
@@ -18,7 +20,8 @@ const main = async (name, description) => {
 };
 
 figlet('Permaweb', async (err, data) => {
-  const name = 'NFT 1';
-  const description = 'the first nft';
-  main(name, description);
+  console.log(data);
+  const name = 'Ticket #2';
+  const description = 'Ticket to attend our event';
+  upload(name, description);
 });

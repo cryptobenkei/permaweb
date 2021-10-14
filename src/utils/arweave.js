@@ -10,6 +10,12 @@ class ArweaveConnect {
     this.testWeave = false;
   }
 
+  async createWallet() {
+    const wallet = await this.arweave.wallets.generate();
+    const addr = await this.arweave.wallets.jwkToAddress(wallet);
+    return addr;
+  }
+
   async init() {
     if (this.testnet) {
       this.arweave = Arweave.init({
@@ -31,15 +37,11 @@ class ArweaveConnect {
   }
 
   async mine() {
-   if (this.testWeave) {
-      console.log('mine 1');
-      await this.testWeave.mine();
-      console.log('mine 2');
-      await this.testWeave.mine();
-      console.log('mine 3');
+    if (this.testWeave) {
       await this.testWeave.mine();
     }
   }
+
   /* eslint-disable */
   //TODO: FIX Linter problems
   async upload(data, dataType) {
@@ -98,11 +100,17 @@ class ArweaveConnect {
   }
   /* eslint-enable */
 
-  async confirmations(transactionId) {
+  async confirmations(txId) {
     // Connect Wallet and verify balance.
-    const result = await this.arweave.transactions.getStatus(transactionId);
+    const result = await this.arweave.transactions.getStatus(txId);
     await this.mine();
     return (result.status === 200 ? result.confirmed.number_of_confirmations : 0);
+  }
+
+  async getTransaction(txId) {
+    const transaction = await this.arweave.transactions.getData(txId);
+    console.log(transaction);
+    return txId;
   }
 
   async deploy(contractSrc, initState) {
@@ -135,10 +143,9 @@ class ArweaveConnect {
         contract,
         input,
       )
-        .then(async (state) => {
+        .then(async (txId) => {
           await this.mine();
-          console.log(state);
-          resolve(state);
+          resolve(txId);
         })
         .catch((e) => {
           console.log('Error', e);
